@@ -68,6 +68,11 @@ __lzsh_llm_api_call() {
   fi
   local pid=$!
 
+  # Trap to catch SIGINT and kill the background process
+  trap "kill $pid 2>/dev/null; return 1" SIGINT
+
+  # Trap to catch SIGINT and kill the background process
+
   # Display a spinner while the API request is running in the background
   local spinner=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
   while true; do
@@ -82,6 +87,7 @@ __lzsh_llm_api_call() {
   done
 
   wait $pid
+  trap - SIGINT  # Remove the trap after the background process is done
   if [ $? -ne 0 ]; then
     zle -M "Error: API request failed"
     return 1
@@ -118,7 +124,7 @@ __lazyshell_complete() {
   # Todo: use zle to read input
   local REPLY
   autoload -Uz read-from-minibuffer
-  read-from-minibuffer '> Query: '
+  read-from-minibuffer '> Query: ' || { trap - SIGINT; return 1 }
   BUFFER="$buffer_context"
   CURSOR=$cursor_position
 
@@ -129,6 +135,11 @@ __lazyshell_complete() {
     local prompt="$REPLY"
   else
     local prompt="Alter zsh command \`$buffer_context\` to comply with query \`$REPLY\`"
+  fi
+
+  # Check if REPLY is not empty before making the API call
+  if [[ -z "$REPLY" ]]; then
+    return 1
   fi
 
   __lzsh_llm_api_call "$intro" "$prompt" "Query: $REPLY" "$model"
@@ -146,8 +157,9 @@ __lazyshell_complete() {
   BUFFER="$generated_text"
   CURSOR=$#BUFFER
 }
+
 __lazyshell_complete4() {
-	__lazyshell_complete gpt-4-0613
+	__lazyshell_complete gpt-4o
 }
 
 # Explains the current zsh command
@@ -181,8 +193,8 @@ fi
 zle -N __lazyshell_complete
 zle -N __lazyshell_complete4
 zle -N __lazyshell_explain
-bindkey '\eg' __lazyshell_complete
-bindkey '^[G' __lazyshell_complete4
+bindkey '^[G' __lazyshell_complete
+bindkey '\eg' __lazyshell_complete4
 bindkey '\ee' __lazyshell_explain
 
 typeset -ga ZSH_AUTOSUGGEST_CLEAR_WIDGETS
