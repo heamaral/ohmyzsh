@@ -124,7 +124,7 @@ __lazyshell_complete() {
   # Todo: use zle to read input
   local REPLY
   autoload -Uz read-from-minibuffer
-  read-from-minibuffer '> Query: ' || { trap - SIGINT; return 1 }
+  read-from-minibuffer '> Query: '
   BUFFER="$buffer_context"
   CURSOR=$cursor_position
 
