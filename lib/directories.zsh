@@ -36,5 +36,5 @@ compdef _dirs d
 # List directory contents
 alias lsa='ls -lah'
 alias l='ls -lah'
-alias ll='ls -lh'
+alias ll='pls -d user -d group -d perm -d size -d ctime -d oct || ls -lh'
 alias la='ls -lAh'
